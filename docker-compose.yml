@@ -1,0 +1,37 @@
+services:
+  flask:
+    build: .
+    container_name: flask_app
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+      - mongo
+    command: gunicorn --bind 0.0.0.0:5000 run:app --workers=4
+
+  celery:
+    build: .
+    container_name: celery_worker
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - mongo
+    command: celery -A app.tasks.celery worker --loglevel=info
+
+  redis:
+    image: "redis:alpine"
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  mongo:
+    image: "mongo"
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
